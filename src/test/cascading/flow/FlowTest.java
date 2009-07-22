@@ -22,11 +22,17 @@
 package cascading.flow;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.Test;
+
+import junit.framework.Assert;
 
 import cascading.ClusterTestCase;
 import cascading.operation.BaseOperation;
@@ -40,6 +46,7 @@ import cascading.pipe.Each;
 import cascading.pipe.GroupBy;
 import cascading.pipe.Pipe;
 import cascading.scheme.TextLine;
+import cascading.stats.FlowStats;
 import cascading.tap.Hfs;
 import cascading.tap.Lfs;
 import cascading.tap.Tap;
@@ -359,6 +366,36 @@ public class FlowTest extends ClusterTestCase
       {
       // ignore
       }
+    }
+  
+  @Test
+  public void testCounters () throws IOException, InterruptedException
+    {
+	  if( !new File( inputFileLower ).exists() )
+	      fail( "data file not found" );
+
+	    copyFromLocal( inputFileLower );
+
+	    Tap sourceLower = new Hfs( new TextLine( new Fields( "offset", "line" ) ), inputFileLower );
+
+	    Function splitter = new RegexSplitter( new Fields( "num", "char" ), " " );
+
+	    Tap sink = new Hfs( new TextLine(), outputPath + "/counters/", true );
+
+	    Pipe pipeLower = new Each( new Pipe( "lower" ), new Fields( "line" ), splitter );
+
+
+	    Flow flow = new FlowConnector( getProperties() ).connect( sourceLower, sink, pipeLower );
+
+	    flow.start();
+	    
+	    FlowStats flowStats = flow.getFlowStats();
+	    
+	    Collection<String> jobNames = flowStats.getJobNames();
+		
+	    Assert.assertEquals(1, jobNames.size());
+	    
+	    Assert.assertNotNull(flowStats.getCounter(jobNames.iterator().next()));
     }
 
   }

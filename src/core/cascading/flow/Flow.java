@@ -900,7 +900,7 @@ public class Flow implements Runnable
 
       flowStepJob.setPredecessors( predecessors );
       }
-
+    flowStats.setJobsMap( jobsMap );
     flowStats.setStepsCount( jobsMap.size() );
     }
 

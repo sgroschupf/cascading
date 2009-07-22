@@ -21,7 +21,17 @@
 
 package cascading.stats;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+
+import org.apache.hadoop.mapred.Counters;
+
 import cascading.flow.Flow;
+import cascading.flow.FlowStep;
+import cascading.flow.FlowStep.FlowStepJob;
 
 
 /** Class FlowStats collects {@link Flow} specific statistics. */
@@ -29,6 +39,8 @@ public class FlowStats extends CascadingStats
   {
   /** Field stepsCount */
   int stepsCount;
+  private Map<String, Callable<Throwable>> jobsMap;
+  private CountDownLatch latch = new CountDownLatch(1);
 
   /**
    * Method getStepsCount returns the number of steps this Flow executed.
@@ -44,6 +56,8 @@ public class FlowStats extends CascadingStats
    * Method setStepsCount sets the steps value.
    *
    * @param stepsCount the stepsCount of this FlowStats object.
+   * 
+   * @deprecated SG: since we pass in the complete jobsMap now we might not need to set this separately.
    */
   public void setStepsCount( int stepsCount )
     {
@@ -61,4 +75,28 @@ public class FlowStats extends CascadingStats
     {
     return "Flow{" + getStatsString() + '}';
     }
+
+  public void setJobsMap(Map<String, Callable<Throwable>> jobsMap) 
+    {
+	this.jobsMap = jobsMap;
+	latch.countDown();
+    }
+  
+  public Collection<String> getJobNames() throws InterruptedException
+    {
+	  latch.await();
+	  return jobsMap.keySet();
+    }
+  
+  public Counters getCounter(String jobName) throws IOException, InterruptedException 
+    {
+	  FlowStep.FlowStepJob job = (FlowStepJob) jobsMap.get(jobName);
+	  if(job != null)
+	  	{
+			  return job.getCounters();
+		}
+	  return null;
+	  
+    }
+  
   }

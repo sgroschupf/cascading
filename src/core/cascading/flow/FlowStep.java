@@ -41,6 +41,8 @@ import cascading.tuple.hadoop.TupleComparator;
 import cascading.tuple.hadoop.TuplePairComparator;
 import cascading.tuple.hadoop.TupleSerialization;
 import cascading.util.Util;
+
+import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
@@ -426,6 +428,7 @@ public class FlowStep implements Serializable
 
     private List<FlowStepJob> predecessors;
     private final CountDownLatch latch = new CountDownLatch( 1 );
+    private final CountDownLatch wasStartedLatch = new CountDownLatch( 1 );
     private boolean stop = false;
 
     public FlowStepJob( String stepName, JobConf currentConf )
@@ -479,7 +482,9 @@ public class FlowStep implements Serializable
 
         currentJobClient = new JobClient( currentConf );
         runningJob = currentJobClient.submitJob( currentConf );
-
+        // SG: signal job was started.
+        wasStartedLatch.countDown();
+        
         runningJob.waitForCompletion();
 
         if( !stop && !runningJob.isSuccessful() )
@@ -555,6 +560,12 @@ public class FlowStep implements Serializable
       {
       return runningJob != null;
       }
+
+	public Counters getCounters() throws IOException, InterruptedException 
+	  {
+		wasStartedLatch.await();
+		return runningJob.getCounters();
+	  }
     }
 
   private void logInfo( String message )
