@@ -82,21 +82,47 @@ public class FlowStats extends CascadingStats
 	latch.countDown();
     }
   
-  public Collection<String> getJobNames() throws InterruptedException
+	/**
+	 * @return names of flow jobs or null if not yet known and we don't wait for it.
+	 */
+  public String[] getJobNames(boolean  wait) 
     {
-	  latch.await();
-	  return jobsMap.keySet();
+	  if(wait)
+	  {
+		  try {
+			latch.await();
+		} catch (InterruptedException e) {
+			return null;
+		}
+	  }
+	  if(jobsMap != null)
+	  {
+		  return jobsMap.keySet().toArray(new String[jobsMap.size()]);
+	  } else {
+		  return null;
+	  }
+	  
     }
   
-  public Counters getCounter(String jobName) throws IOException, InterruptedException 
+  public Counters getCounter(String jobName, boolean wait) throws IOException, InterruptedException 
     {
-	  FlowStep.FlowStepJob job = (FlowStepJob) jobsMap.get(jobName);
+	  if(wait)
+	  {
+		try {
+			latch.await();
+		} catch (InterruptedException e) {
+			return null;
+		}
+	  }
+	  if(jobsMap!=null)
+	  {
+		 FlowStep.FlowStepJob job = (FlowStepJob) jobsMap.get(jobName);
 	  if(job != null)
 	  	{
-			  return job.getCounters();
-		}
+		  return job.getCounters();
+		}  
+	  }
 	  return null;
-	  
     }
   
   }

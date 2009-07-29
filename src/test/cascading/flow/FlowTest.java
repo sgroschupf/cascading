@@ -391,11 +391,11 @@ public class FlowTest extends ClusterTestCase
 	    
 	    FlowStats flowStats = flow.getFlowStats();
 	    
-	    Collection<String> jobNames = flowStats.getJobNames();
+	    String[] jobNames = flowStats.getJobNames(true);
 		
-	    Assert.assertEquals(1, jobNames.size());
+	    Assert.assertEquals(1, jobNames.length);
 	    
-	    Assert.assertNotNull(flowStats.getCounter(jobNames.iterator().next()));
+	    Assert.assertNotNull(flowStats.getCounter(jobNames[0], true));
     }
 
   }
