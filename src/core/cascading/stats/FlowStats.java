@@ -103,7 +103,7 @@ public class FlowStats extends CascadingStats
 	  
     }
   
-  public Counters getCounter(String jobName, boolean wait) throws IOException, InterruptedException 
+  public Counters getCounter(String jobName, boolean wait) throws IOException  
     {
 	  if(wait)
 	  {
@@ -118,7 +118,11 @@ public class FlowStats extends CascadingStats
 		 FlowStep.FlowStepJob job = (FlowStepJob) jobsMap.get(jobName);
 	  if(job != null)
 	  	{
-		  return job.getCounters();
+		  try {
+			return job.getCounters();
+		} catch (InterruptedException e) {
+			return null;
+		}
 		}  
 	  }
 	  return null;
