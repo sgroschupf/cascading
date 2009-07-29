@@ -22,7 +22,6 @@
 package cascading.stats;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
